@@ -1,34 +1,29 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unsafe-optional-chaining */
-//@ts-nocheck
 import { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect, Transformer, Image as KonvaImage } from 'react-konva';
 import useImage from 'use-image';
 
 import { Button, LoadingOverlay, Group } from '@mantine/core';
-import { DownloadIcon, RefreshCcw } from 'lucide-react';
-import lampSrc from '../../../../assets/Lamp.png';
-import backgroundImageSrc from '../../../../assets/bg.jpeg';
+import { DownloadIcon } from 'lucide-react';
 import { useResult, useStepperForm } from '@/hooks';
-import { bg, image } from './bg';
 
-export const MovingBlockCanvas = () => {
-  const [isDownlaoding, setIsDownloading] = useState(false);
-  const { store } = useResult();
+export const MovingBlockCanvas = ({
+  backgroundImage,
+  productImage,
+  x,
+  y,
+}: {
+  backgroundImage: HTMLImageElement | undefined;
+  productImage: HTMLImageElement | undefined;
+  x: number;
+  y: number;
+}) => {
+  const [isDownloading, setIsDownloading] = useState(false);
   const { stepperForm } = useStepperForm();
 
   const stageRef = useRef();
-
   const rectRef = useRef();
-
   const imageRef = useRef();
-
   const trRef = useRef();
-
-  const [productImage, loadingProduct] = useImage(`data:image/jpeg;base64,${store?.product}`);
-  const [backgroundImage, loadingBackground] = useImage(
-    `data:image/jpeg;base64,${store?.background}`
-  );
 
   const checkBoundaries = (node) => {
     const stage = node.getStage();
@@ -50,41 +45,35 @@ export const MovingBlockCanvas = () => {
     }
   };
 
-  useEffect(() => console.log(1));
-  useEffect(() => {
-    const tr = trRef.current;
-    if (tr) {
-      tr.nodes([rectRef.current, imageRef.current].filter(Boolean));
-      tr.getLayer().batchDraw();
-    }
-  });
-
   const getImagePositionAndScale = () => {
-    if (!productImage || loadingProduct !== 'loaded') return { x: 0, y: 0, scaleX: 1, scaleY: 1 };
+    if (!productImage) return { x: 0, y: 0, scaleX: 1, scaleY: 1 };
 
-    if (!rectRef || !rectRef.current) return { x: 0, y: 0, scaleX: 1, scaleY: 1 };
+    const rectNode = rectRef.current;
+    if (!rectNode) return { x: 0, y: 0, scaleX: 1, scaleY: 1 };
 
-    const rect = rectRef.current;
-    const rectWidth = rect.width();
-    const rectHeight = rect?.height();
+    const rectWidth = rectNode.width();
+    const rectHeight = rectNode.height();
 
-    const imageAspectRatio = productImage.width / productImage.height;
+    const imageWidth = productImage.width;
+    const imageHeight = productImage.height;
+
+    const imageAspectRatio = imageWidth / imageHeight;
     const rectAspectRatio = rectWidth / rectHeight;
 
-    let scaleX;
-    let scaleY;
+    let scaleX, scaleY, offsetX, offsetY;
+
     if (rectAspectRatio > imageAspectRatio) {
-      scaleX = rectWidth / productImage.width;
-      scaleY = rectWidth / productImage.width;
+      scaleX = rectHeight / imageHeight;
+      scaleY = rectHeight / imageHeight;
     } else {
-      scaleX = rectHeight / productImage.height;
-      scaleY = rectHeight / productImage.height;
+      scaleX = rectWidth / imageWidth;
+      scaleY = rectWidth / imageWidth;
     }
 
-    const x = (rectWidth - productImage.width * scaleX) / 2;
-    const y = (rectHeight - productImage.height * scaleY) / 2;
+    offsetX = (rectWidth - imageWidth * scaleX) / 2;
+    offsetY = (rectHeight - imageHeight * scaleY) / 2;
 
-    return { x, y, scaleX, scaleY };
+    return { x: offsetX, y: offsetY, scaleX, scaleY };
   };
 
   const downloadImage = () => {
@@ -92,7 +81,7 @@ export const MovingBlockCanvas = () => {
     setTimeout(() => {
       const dataURL = stageRef.current.toDataURL();
       const link = document.createElement('a');
-      link.download = `${stepperForm.productPicture?.fileName}_background.png`;
+      link.download = `${stepperForm.productPicture?.fileName.split('.')[0]}_background.png`;
       link.href = dataURL;
       document.body.appendChild(link);
       link.click();
@@ -100,6 +89,14 @@ export const MovingBlockCanvas = () => {
       setIsDownloading(false);
     }, 500);
   };
+
+  useEffect(() => {
+    const transformer = trRef.current;
+    if (transformer) {
+      transformer.nodes([rectRef.current, imageRef.current].filter(Boolean));
+      transformer.getLayer().batchDraw();
+    }
+  });
 
   return (
     <>
@@ -115,80 +112,77 @@ export const MovingBlockCanvas = () => {
         </Button>
       </Group>
       <LoadingOverlay
-        visible={isDownlaoding}
+        visible={isDownloading}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
         style={{ width: 514, height: 514, top: 114, left: '50%', transform: 'translate(-50%, 0)' }}
       />
-      {backgroundImage && productImage && (
-        <Stage width={512} height={512} style={{ width: 512 }} ref={stageRef}>
-          <Layer>
-            <KonvaImage image={backgroundImage} width={512} height={512} />
+      <Stage width={512} height={512} style={{ width: 512 }} ref={stageRef}>
+        <Layer>
+          <KonvaImage image={backgroundImage} width={512} height={512} />
 
-            <Rect
-              x={store?.x}
-              y={store?.y}
-              width={productImage?.width}
-              height={productImage?.height}
-              draggable
-              ref={rectRef}
-              onDragMove={() => checkBoundaries(rectRef.current)}
-              onTransform={() => checkBoundaries(rectRef.current)}
-              onTransformEnd={() => checkBoundaries(rectRef.current)}
-            />
-            <KonvaImage
-              image={productImage}
-              width={productImage?.width}
-              height={productImage?.height}
-              x={rectRef.current?.x() + getImagePositionAndScale().x}
-              y={rectRef.current?.y() + getImagePositionAndScale().y}
-              scaleX={getImagePositionAndScale().scaleX}
-              scaleY={getImagePositionAndScale().scaleY}
-              draggable
-              ref={imageRef}
-              onDragMove={() => {
-                checkBoundaries(imageRef.current);
-              }}
-              onTransform={() => {
-                checkBoundaries(imageRef.current);
-              }}
-              onTransformEnd={() => {
-                checkBoundaries(imageRef.current);
-              }}
-            />
-            <Transformer
-              ref={trRef}
-              // borderStroke="black"
-              borderStrokeWidth={1}
-              boundBoxFunc={(oldBox, newBox) => {
-                const stage = rectRef.current.getStage();
-                const width = stage.width();
-                const height = stage.height();
+          <Rect
+            x={x}
+            y={y}
+            width={productImage?.width}
+            height={productImage?.height}
+            draggable
+            ref={rectRef}
+            onDragMove={() => checkBoundaries(rectRef.current)}
+            onTransform={() => checkBoundaries(rectRef.current)}
+            onTransformEnd={() => checkBoundaries(rectRef.current)}
+          />
+          <KonvaImage
+            image={productImage}
+            width={productImage?.width}
+            height={productImage?.height}
+            x={x}
+            y={y}
+            scaleX={getImagePositionAndScale().scaleX}
+            scaleY={getImagePositionAndScale().scaleY}
+            draggable
+            ref={imageRef}
+            onDragMove={() => {
+              checkBoundaries(imageRef.current);
+            }}
+            onTransform={() => {
+              checkBoundaries(imageRef.current);
+            }}
+            onTransformEnd={() => {
+              checkBoundaries(imageRef.current);
+            }}
+          />
+          <Transformer
+            ref={trRef}
+            borderStrokeWidth={1}
+            boundBoxFunc={(oldBox, newBox) => {
+              const stage = rectRef.current.getStage();
+              const width = stage.width();
+              const height = stage.height();
 
-                if (newBox.x < 0 || newBox.y < 0) {
-                  return oldBox;
-                }
+              if (newBox.x < 0 || newBox.y < 0) {
+                return oldBox;
+              }
 
-                if (
-                  newBox.x < 0 ||
-                  newBox.y < 0 ||
-                  newBox.x + newBox.width > width ||
-                  newBox.y + newBox.height > height
-                ) {
-                  return oldBox;
-                }
+              if (
+                newBox.x < 0 ||
+                newBox.y < 0 ||
+                newBox.x + newBox.width > width ||
+                newBox.y + newBox.height > height
+              ) {
+                return oldBox;
+              }
 
-                return newBox;
-              }}
-              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
-              borderEnabled={!isDownlaoding}
-              resizeEnabled={!isDownlaoding}
-              flipEnabled={!isDownlaoding}
-              rotateEnabled={!isDownlaoding}
-            />
-          </Layer>
-        </Stage>
-      )}
+              return newBox;
+            }}
+            enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+            borderEnabled={!isDownloading}
+            resizeEnabled={!isDownloading}
+            flipEnabled={!isDownloading}
+            rotateEnabled={!isDownloading}
+          />
+        </Layer>
+      </Stage>
     </>
   );
 };
