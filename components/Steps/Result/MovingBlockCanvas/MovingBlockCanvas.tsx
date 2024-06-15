@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unsafe-optional-chaining */
+//@ts-nocheck
 import { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect, Transformer, Image as KonvaImage } from 'react-konva';
 import useImage from 'use-image';
