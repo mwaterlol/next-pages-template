@@ -26,6 +26,7 @@ const HomePage = () => {
   }, [loadingTextIndex]);
 
   const onSubmit = async (data: ProductFormData) => {
+    notifications.clean();
     setLoading(true);
     try {
       resultStore.set(undefined);
@@ -41,11 +42,15 @@ const HomePage = () => {
     } catch (error) {
       console.log(error);
       setLoading(false);
-      notifications.show({
-        color: 'red',
-        title: 'Произошла ошибка при генерации фона',
-        message: 'Попробуйте пожалуйста позже',
-      });
+      setTimeout(
+        () =>
+          notifications.show({
+            color: 'red',
+            title: 'Произошла ошибка при генерации фона',
+            message: 'Попробуйте пожалуйста позже',
+          }),
+        100
+      );
     }
   };
 

@@ -4,7 +4,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect, Transformer, Image as KonvaImage } from 'react-konva';
 import Link from 'next/link';
-import { Button, LoadingOverlay, Text, Flex, Paper, Loader } from '@mantine/core';
+import { Button, LoadingOverlay, Text, Flex, Paper, Loader, rem } from '@mantine/core';
 import { DownloadIcon, Plus, RefreshCcw } from 'lucide-react';
 import { useStepperForm } from '@/hooks';
 import { notifications } from '@mantine/notifications';
@@ -116,6 +116,7 @@ export const MovingBlockCanvas = ({
 
       return;
     }
+    notifications.clean;
     setLoading(true);
     try {
       const response: { data: ApiResponse } = await axios.post('/api/process-image', {
@@ -128,18 +129,22 @@ export const MovingBlockCanvas = ({
       resultStore.set(response.data);
     } catch (error) {
       console.log(error);
-      notifications.show({
-        color: 'red',
-        title: 'Произошла ошибка при генерации фона',
-        message: 'Попробуйте пожалуйста позже',
-      });
+      setTimeout(
+        () =>
+          notifications.show({
+            color: 'red',
+            title: 'Произошла ошибка при генерации фона',
+            message: 'Попробуйте пожалуйста позже',
+          }),
+        100
+      );
     } finally {
       setLoading(true);
     }
   };
   return (
     <>
-      <Flex align="center" gap="md" justify="space-between">
+      <Flex align="center" gap="md">
         <Button
           onClick={downloadImage}
           type="button"
@@ -154,10 +159,18 @@ export const MovingBlockCanvas = ({
         </Button>
       </Flex>
       <LoadingOverlay
-        visible={isDownloading || loading}
+        visible={isDownloading}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
-        style={{ width: 514, height: 514, top: 114, left: '50%', transform: 'translate(-50%, 0)' }}
+        style={{ width: 514, height: 514, top: 114 }}
+      />
+      <LoadingOverlay
+        visible={loading}
+        zIndex={1000}
+        styles={{ root: { width: '100%', height: 512, top: 114, position: 'absolute' } }}
+        over
+        overlayProps={{ blur: 2 }}
+        style={{ borderRadius: 0, width: '100%' }}
       />
       <Stage width={512} height={512} style={{ width: 512 }} ref={stageRef}>
         <Layer>

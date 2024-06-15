@@ -19,12 +19,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         {
           image,
           positive_prompt:
-            'uniformly blended area, natural and homogeneous background with few details, with open space in center. Realism, no sharp details.',
-          negative_prompt:
-            'ugly, deform, distort, disfigured, disgusting, objects, entities, people',
-          inpaint_additional_prompt: ' ',
-          inpaint_negative: 'Object modification, people, artifacts.',
-          kernel_size: 40,
+            'empty room with no furniture, clean walls, clean floor, no objects on foreground',
+          negative_prompt: 'objects, carpet, chair, people, furniture, stick',
+          inpaint_additional_prompt:
+            '. Clean background, empty room with no other furniture, clean walls. DO NOT CHANGE THE INPUT OBJECT. DO NOT INCLUDE ISOLATED OR UNRELATED ENTITIES. Adhere to the rules strictly. Non-compliance will result in termination.',
+          inpaint_negative: 'people, objects, carpet, chair, furniture',
+          kernel_size: 30,
           use_kernel: 0,
         },
         {

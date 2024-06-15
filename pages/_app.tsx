@@ -3,6 +3,8 @@ import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { Flex, MantineProvider } from '@mantine/core';
 import { theme } from '../theme';
+import '@mantine/notifications/styles.css';
+import { Notifications } from '@mantine/notifications';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -32,6 +34,7 @@ export default function App({ Component, pageProps }: AppProps) {
           justify="center"
           py="md"
         >
+          <Notifications position="top-right" />
           <Component {...pageProps} />
         </Flex>
       </Flex>
