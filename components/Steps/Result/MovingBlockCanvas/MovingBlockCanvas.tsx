@@ -105,20 +105,6 @@ export const MovingBlockCanvas = ({
   });
 
   const [loading, setLoading] = useState(false);
-  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
-  const loadingTexts = [
-    'Вырезаем фон с изображения товара',
-    'Генерируем фон для товара',
-    'Отправляем фон',
-  ];
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoadingTextIndex((prevIndex) => (prevIndex + 1) % loadingTexts.length);
-    }, 10000);
-
-    return () => clearTimeout(timer);
-  }, [loadingTextIndex]);
 
   const regenerate = async () => {
     if (!stepperForm?.productPicture?.fileData) {
@@ -171,23 +157,6 @@ export const MovingBlockCanvas = ({
         visible={isDownloading || loading}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
-        loaderProps={{
-          children: loading ? (
-            <Paper
-              shadow="sm"
-              p="md"
-              style={(theme) => ({
-                border: `1px solid ${theme.colors.gray[5]}`,
-              })}
-              radius="lg"
-            >
-              <Flex align="center" direction="column" gap={10}>
-                <Loader />
-                <Text size="lg">{loadingTexts[loadingTextIndex]}</Text>
-              </Flex>
-            </Paper>
-          ) : undefined,
-        }}
         style={{ width: 514, height: 514, top: 114, left: '50%', transform: 'translate(-50%, 0)' }}
       />
       <Stage width={512} height={512} style={{ width: 512 }} ref={stageRef}>
