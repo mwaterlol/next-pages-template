@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { MovingBlockCanvas } from './MovingBlockCanvas';
 import { useResult } from '@/hooks';
 import useImage from 'use-image';
-import { CircleHelp } from 'lucide-react';
+import { CircleHelp, Plus } from 'lucide-react';
 
 export const Result = () => {
   const { store } = useResult();
@@ -29,7 +29,7 @@ export const Result = () => {
           y={store?.y ?? 10}
         />
       )}
-      <Button component={Link} href="/">
+      <Button component={Link} href="/" rightSection={<Plus />}>
         Выбрать новое изображение
       </Button>
     </Stack>

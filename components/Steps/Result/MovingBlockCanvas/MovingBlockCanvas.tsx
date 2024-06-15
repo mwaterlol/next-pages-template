@@ -3,11 +3,14 @@
 //@ts-nocheck
 import { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect, Transformer, Image as KonvaImage } from 'react-konva';
-import useImage from 'use-image';
-
-import { Button, LoadingOverlay, Group } from '@mantine/core';
-import { DownloadIcon } from 'lucide-react';
-import { useResult, useStepperForm } from '@/hooks';
+import Link from 'next/link';
+import { Button, LoadingOverlay, Text, Flex, Paper, Loader } from '@mantine/core';
+import { DownloadIcon, Plus, RefreshCcw } from 'lucide-react';
+import { useStepperForm } from '@/hooks';
+import { notifications } from '@mantine/notifications';
+import axios from 'axios';
+import { ApiResponse } from '@/types';
+import { resultStore } from '@/store';
 
 export const MovingBlockCanvas = ({
   backgroundImage,
@@ -101,9 +104,56 @@ export const MovingBlockCanvas = ({
     }
   });
 
+  const [loading, setLoading] = useState(false);
+  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  const loadingTexts = [
+    'Вырезаем фон с изображения товара',
+    'Генерируем фон для товара',
+    'Отправляем фон',
+  ];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingTextIndex((prevIndex) => (prevIndex + 1) % loadingTexts.length);
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [loadingTextIndex]);
+
+  const regenerate = async () => {
+    if (!stepperForm?.productPicture?.fileData) {
+      notifications.show({
+        color: 'red',
+        title: 'Произошла ошибка при генерации фона',
+        message: 'Попробуйте пожалуйста позже',
+      });
+
+      return;
+    }
+    setLoading(true);
+    try {
+      const response: { data: ApiResponse } = await axios.post('/api/process-image', {
+        image: stepperForm.productPicture?.fileData
+          .replace(/^data:image\/jpeg;base64,/, '')
+          .replace(/^data:image\/png;base64,/, '')
+          .replace(/^data:image\/gif;base64,/, ''),
+      });
+
+      resultStore.set(response.data);
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        color: 'red',
+        title: 'Произошла ошибка при генерации фона',
+        message: 'Попробуйте пожалуйста позже',
+      });
+    } finally {
+      setLoading(true);
+    }
+  };
   return (
     <>
-      <Group>
+      <Flex align="center" gap="md" justify="space-between">
         <Button
           onClick={downloadImage}
           type="button"
@@ -113,11 +163,31 @@ export const MovingBlockCanvas = ({
         >
           Скачать изображение
         </Button>
-      </Group>
+        <Button onClick={regenerate} rightSection={<RefreshCcw />} variant="outline">
+          Перегенерация
+        </Button>
+      </Flex>
       <LoadingOverlay
-        visible={isDownloading}
+        visible={isDownloading || loading}
         zIndex={1000}
         overlayProps={{ radius: 'sm', blur: 2 }}
+        loaderProps={{
+          children: loading ? (
+            <Paper
+              shadow="sm"
+              p="md"
+              style={(theme) => ({
+                border: `1px solid ${theme.colors.gray[5]}`,
+              })}
+              radius="lg"
+            >
+              <Flex align="center" direction="column" gap={10}>
+                <Loader />
+                <Text size="lg">{loadingTexts[loadingTextIndex]}</Text>
+              </Flex>
+            </Paper>
+          ) : undefined,
+        }}
         style={{ width: 514, height: 514, top: 114, left: '50%', transform: 'translate(-50%, 0)' }}
       />
       <Stage width={512} height={512} style={{ width: 512 }} ref={stageRef}>
